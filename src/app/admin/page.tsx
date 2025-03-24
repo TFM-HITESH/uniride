@@ -1,4 +1,3 @@
-import { ThemeToggle } from "@/components/theme-toggle";
 import React from "react";
 
 type Props = {};

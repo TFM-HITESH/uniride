@@ -1,6 +1,5 @@
 import React from "react";
 import RideCard from "./components/ride-card";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 type Props = {};
 

@@ -1,4 +1,3 @@
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
 import { GoGraph } from "react-icons/go";
 import { HiUserGroup } from "react-icons/hi";
 import { FaTaxi } from "react-icons/fa";
@@ -107,7 +106,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarFooterComponent />
+        <SidebarFooterComponent name="Hitesh Shivkumar" />
       </SidebarFooter>
     </Sidebar>
   );
