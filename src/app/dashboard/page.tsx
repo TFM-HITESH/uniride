@@ -16,10 +16,12 @@ export default function page({}: Props) {
           time="2:30 PM"
           date="Jan 15, 2025"
           seats_left={2}
+          desc_text="Will leave after 1:20 lab. Pickup from right near wraps and fries. Will pickup food from McDonalds."
           car_class="Sedan"
           car_model="Swift Dzire"
           air_conditioning={true}
           female_only={false}
+          male_only={false}
         />
         <RideCard
           fullname="Shreya Gupta"
@@ -30,10 +32,12 @@ export default function page({}: Props) {
           time="3:30 PM"
           date="Jan 21, 2025"
           seats_left={4}
+          desc_text="Leaving after 3:30 class from SJT. Passing through. Can stop at main gate for a quick pickup."
           car_class="Sedan"
           car_model="Chevy Impala"
           air_conditioning={true}
           female_only={true}
+          male_only={false}
         />
       </div>
     </div>

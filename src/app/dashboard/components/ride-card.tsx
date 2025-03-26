@@ -17,10 +17,12 @@ type Props = {
   time: string;
   date: string;
   seats_left: number;
+  desc_text: string;
   car_class: string;
   car_model: string;
   air_conditioning: boolean;
   female_only: boolean;
+  male_only: boolean;
 };
 
 export default function RideCard({
@@ -32,10 +34,12 @@ export default function RideCard({
   time,
   date,
   seats_left,
+  desc_text,
   car_class,
   car_model,
   air_conditioning,
   female_only,
+  male_only,
 }: Props) {
   return (
     <div className="w-full flex flex-row p-4 md:p-6 rounded-2xl bg-card border">
@@ -51,7 +55,7 @@ export default function RideCard({
             </div>
           </div>
         </div>
-        <div className="py-3 my-3 gap-x-[25%] md:   gap-y-3 w-full grid md:grid-cols-2 justify-items-start">
+        <div className="py-3 my-3 gap-x-[25%] md:gap-y-3 w-full grid md:grid-cols-2 justify-items-start">
           <div className="p-1">
             <p className="text-sm opacity-65 mb-1">From</p>
             <p className="font-semibold opacity-80 overflow-hidden text-ellipsis flex flex-row items-center gap-2">
@@ -81,6 +85,9 @@ export default function RideCard({
             </p>
           </div>
         </div>
+        <div className="w-[90%] pb-4 text-muted-foreground text-[0.9rem]">
+          {desc_text}
+        </div>
         <div className="flex flex-col md:flex-row md:items-center gap-2 mt-4 md:mt-2 w-full justify-start">
           {/* <FaTaxi className="text-sm opacity-65" /> */}
           <FaCarSide className="text-md opacity-65" />
@@ -98,6 +105,7 @@ export default function RideCard({
               {female_only && (
                 <Badge className="text-nowrap">Female Only</Badge>
               )}
+              {male_only && <Badge className="text-nowrap">Male Only</Badge>}
             </div>
           </div>
         </div>
