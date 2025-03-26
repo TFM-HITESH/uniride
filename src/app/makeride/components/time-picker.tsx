@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { FaClock, FaRegClock } from "react-icons/fa";
+import { FaRegClock } from "react-icons/fa";
 
 interface TimePickerProps {
   field: {
