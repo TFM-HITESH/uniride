@@ -20,8 +20,7 @@ export default function page({}: Props) {
           car_class="Sedan"
           car_model="Swift Dzire"
           air_conditioning={true}
-          female_only={false}
-          male_only={false}
+          gender_pref="male"
         />
         <RideCard
           fullname="Shreya Gupta"
@@ -35,9 +34,8 @@ export default function page({}: Props) {
           desc_text="Leaving after 3:30 class from SJT. Passing through. Can stop at main gate for a quick pickup."
           car_class="Sedan"
           car_model="Chevy Impala"
-          air_conditioning={true}
-          female_only={true}
-          male_only={false}
+          air_conditioning={false}
+          gender_pref="any"
         />
       </div>
     </div>

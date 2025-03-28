@@ -21,8 +21,7 @@ type Props = {
   car_class: string;
   car_model: string;
   air_conditioning: boolean;
-  female_only: boolean;
-  male_only: boolean;
+  gender_pref: string;
 };
 
 export default function RideCard({
@@ -38,8 +37,7 @@ export default function RideCard({
   car_class,
   car_model,
   air_conditioning,
-  female_only,
-  male_only,
+  gender_pref,
 }: Props) {
   return (
     <div className="w-full flex flex-row p-4 md:p-6 rounded-2xl bg-card border">
@@ -102,10 +100,23 @@ export default function RideCard({
 
             <div className="flex flex-row gap-2 md:pl-2 items-center">
               {air_conditioning && <Badge>AC</Badge>}
-              {female_only && (
+              {!air_conditioning && (
+                <Badge className="text-nowrap">Non AC</Badge>
+              )}
+
+              {gender_pref === "male" && (
+                <Badge className="text-nowrap">Male Only</Badge>
+              )}
+              {gender_pref === "female" && (
                 <Badge className="text-nowrap">Female Only</Badge>
               )}
-              {male_only && <Badge className="text-nowrap">Male Only</Badge>}
+              {gender_pref === "any" && (
+                <Badge className="text-nowrap">Any Gender</Badge>
+              )}
+              {/* {female_only && (
+                <Badge className="text-nowrap">Female Only</Badge>
+              )}
+              {male_only && <Badge className="text-nowrap">Male Only</Badge>} */}
             </div>
           </div>
         </div>

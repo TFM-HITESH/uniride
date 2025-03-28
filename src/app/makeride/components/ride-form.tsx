@@ -35,20 +35,81 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 
-const formSchema = z.object({
-  username: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
-  }),
-  source: z.string().min(2, {
-    message: "Ride pickup address must be at least 2 characters.",
-  }),
-  destination: z.string().min(2, {
-    message: "Ride destination address must be at least 2 characters.",
-  }),
-  date: z.date({
-    required_error: "A date of ride is required.",
-  }),
-});
+const formSchema = z
+  .object({
+    source: z.string().trim().min(2, {
+      message: "Ride pickup address must be at least 2 characters.",
+    }),
+
+    destination: z.string().trim().min(2, {
+      message: "Ride destination address must be at least 2 characters.",
+    }),
+
+    date: z
+      .date({
+        required_error: "A date of ride is required.",
+      })
+      .refine((date) => date >= new Date(), {
+        message: "The ride date must be in the future.",
+      }),
+
+    time: z.string({
+      message: "You must pick a time for the ride.",
+    }), // Keeping your original time validation
+
+    car_class: z
+      .string({
+        required_error: "You must pick a class of cars.",
+      })
+      .trim(),
+
+    car_model: z
+      .string()
+      .trim()
+      .min(2, { message: "Car model name must be at least 2 characters." }),
+
+    seats_left: z
+      .string()
+      .min(1, { message: "Seats left is required." })
+      .regex(/^\d+$/, { message: "Seats left must be a number." })
+      .transform(Number)
+      .refine((num) => num > 0 && num <= 20, {
+        message: "Total number of seats left must be between 1 and 20.",
+      }),
+
+    ride_cost: z
+      .string()
+      .min(1, { message: "Ride cost is required." })
+      .regex(/^\d+$/, { message: "Ride cost must be a number." })
+      .transform(Number)
+      .refine((num) => num > 0 && num <= 4000, {
+        message: "Total ride cost must be between ₹1 and ₹4000.",
+      }),
+
+    gender_pref: z.enum(["any", "male", "female"], {
+      required_error: "You must select a valid gender preference.",
+    }),
+
+    air_conditioning: z.enum(["ac", "nonac"], {
+      required_error: "You must select a valid AC option.",
+    }),
+
+    desc_text: z
+      .string()
+      .trim()
+      .min(10, { message: "Description must be at least 10 characters long." })
+      .max(100, { message: "Description must not exceed 100 characters." })
+      .refine((text) => text.replace(/\s/g, "").length > 0, {
+        message: "Description cannot be only spaces.",
+      })
+      .refine((text) => !/[<>{}]/.test(text), {
+        message: "Description contains invalid characters.",
+      }),
+  })
+  .refine((data) => data.source !== data.destination, {
+    message: "Pickup and destination addresses must be different.",
+    path: ["destination"], // Error will show under 'destination'
+  });
 
 export function RideForm() {
   // 1. Define your form.
@@ -64,6 +125,7 @@ export function RideForm() {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
     console.log(values);
+    console.log(values.ride_cost);
   }
 
   const now = new Date();
@@ -76,7 +138,7 @@ export function RideForm() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-8 border rounded-xl p-8 md:w-[45%]"
+        className="space-y-8 border rounded-xl w-[95%] p-8 md:w-[45%] my-10"
       >
         <p className="text-3xl font-semibold">Create a New Ride</p>
 
@@ -259,21 +321,27 @@ export function RideForm() {
                   >
                     <FormItem className="flex items-center space-x-3 space-y-0">
                       <FormControl>
-                        <RadioGroupItem value="all" />
+                        <RadioGroupItem value="any" />
                       </FormControl>
-                      <FormLabel className="font-normal">Any</FormLabel>
+                      <FormLabel className="font-normal text-ls text-nowrap">
+                        Any
+                      </FormLabel>
                     </FormItem>
                     <FormItem className="flex items-center space-x-3 space-y-0">
                       <FormControl>
-                        <RadioGroupItem value="mentions" />
+                        <RadioGroupItem value="male" />
                       </FormControl>
-                      <FormLabel className="font-normal">Male Only</FormLabel>
+                      <FormLabel className="font-normal text-nowrap">
+                        Male Only
+                      </FormLabel>
                     </FormItem>
                     <FormItem className="flex items-center space-x-3 space-y-0">
                       <FormControl>
-                        <RadioGroupItem value="none" />
+                        <RadioGroupItem value="female" />
                       </FormControl>
-                      <FormLabel className="font-normal">Female Only</FormLabel>
+                      <FormLabel className="font-normal text-nowrap">
+                        Female Only
+                      </FormLabel>
                     </FormItem>
                   </RadioGroup>
                 </FormControl>
@@ -296,13 +364,13 @@ export function RideForm() {
                   >
                     <FormItem className="flex items-center space-x-3 space-y-0">
                       <FormControl>
-                        <RadioGroupItem value="all" />
+                        <RadioGroupItem value="ac" />
                       </FormControl>
                       <FormLabel className="font-normal">AC</FormLabel>
                     </FormItem>
                     <FormItem className="flex items-center space-x-3 space-y-0">
                       <FormControl>
-                        <RadioGroupItem value="mentions" />
+                        <RadioGroupItem value="nonac" />
                       </FormControl>
                       <FormLabel className="font-normal">Non-AC</FormLabel>
                     </FormItem>
