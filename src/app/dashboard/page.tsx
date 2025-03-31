@@ -1,9 +1,29 @@
+"use client";
+
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 import React from "react";
 import RideCard from "./components/ride-card";
 
 type Props = {};
 
-export default function page({}: Props) {
+export default function Page({}: Props) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (!session || !session.user?.email?.endsWith("@vitstudent.ac.in")) {
+      router.push("/login"); // Redirect unauthorized users
+    }
+  }, [session, status, router]);
+
+  if (status === "loading") return <p>Loading...</p>;
+
+  // <p className="text-lg">{session?.user?.name}!</p>
+  // <p className="text-md text-gray-600">Email: {session?.user?.email}</p>
   return (
     <div className="w-full flex justify-center items-center min-h-screen">
       <div className="flex flex-col gap-10 my-10 w-[90%] md:w-[45%]">

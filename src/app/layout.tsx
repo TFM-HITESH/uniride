@@ -1,9 +1,12 @@
-import type { Metadata } from "next";
+"use client";
+
+// import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
 import SimpleFooter from "@/components/simple-footer";
+import Navbar from "@/components/navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,10 +18,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Uniride",
-  description: "Uniride: Campus to Comfort, made Easy!",
-};
+// export const metadata: Metadata = {
+//   title: "Uniride",
+//   description: "Uniride: Campus to Comfort, made Easy!",
+// };
 
 export default function RootLayout({
   children,
@@ -26,23 +29,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // suppressHydrationWarning
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <div className="absolute top-[2%] right-[3%] md:top-[2%] md:right-[1%]">
-            <ThemeToggle />
-          </div>
-          {children}
-          <SimpleFooter />
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Navbar />
+            {/* <div className="absolute top-[2%] right-[3%] md:top-[2%] md:right-[1%]">
+              <ThemeToggle />
+            </div> */}
+            {children}
+            <SimpleFooter />
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );
