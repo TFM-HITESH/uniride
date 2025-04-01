@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
   const token = await getToken({ req });
-  const protectedRoutes = ["/dashboard", "/admin"];
+  const protectedRoutes = ["/dashboard", "/admin", "/user"];
 
   if (protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route))) {
     if (!token || !token.email?.endsWith("@vitstudent.ac.in")) {

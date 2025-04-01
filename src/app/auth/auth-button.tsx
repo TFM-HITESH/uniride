@@ -10,6 +10,8 @@ import {
 import ColourAvatar from "@/components/colour-avatar";
 import { processName } from "@/lib/utils";
 import { FaGoogle } from "react-icons/fa";
+import { CgProfile } from "react-icons/cg";
+import Link from "next/link";
 
 export default function AuthButton() {
   const { data: session } = useSession();
@@ -30,12 +32,22 @@ export default function AuthButton() {
             </p>
           </div>
           <div className="w-full h-[1px] my-2 bg-foreground opacity-45"></div>
-          <Button
-            onClick={() => signOut({ callbackUrl: "/" })} // ✅ Explicitly set redirect
-            className="w-full"
-          >
-            Sign Out
-          </Button>
+          <div className="w-full gap-2 flex flex-col">
+            <Button className="w-full" variant={"secondary"}>
+              <Link
+                href="/user"
+                className="w-full flex flex-row items-center justify-center gap-2"
+              >
+                <CgProfile /> Profile
+              </Link>
+            </Button>
+            <Button
+              onClick={() => signOut({ callbackUrl: "/" })} // ✅ Explicitly set redirect
+              className="w-full"
+            >
+              Sign Out
+            </Button>
+          </div>
         </div>
       </PopoverContent>
     </Popover>

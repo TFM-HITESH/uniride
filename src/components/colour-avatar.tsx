@@ -93,10 +93,10 @@ const ColourAvatar: React.FC<AvatarProps> = ({ name, className }) => {
   return (
     <div
       className={cn(
-        "w-10 h-10 md:w-10 md:h-10 flex items-center justify-center rounded-full font-bold",
+        className,
+        "w-10 h-10 flex items-center justify-center rounded-full font-bold",
         bg,
-        text,
-        className
+        text
       )}
     >
       {firstLetter}
