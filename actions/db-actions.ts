@@ -1,8 +1,6 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { db } from "@/lib/db"; // Import the shared Prisma client
 
 export async function getUserByEmail(email: string) {
   try {
@@ -10,7 +8,7 @@ export async function getUserByEmail(email: string) {
       return { error: "Email is required" };
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await db.user.findUnique({
       where: { email },
     });
 

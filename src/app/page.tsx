@@ -41,13 +41,9 @@ export default function Home() {
             <Button
               className="text-2xl p-8"
               onClick={() =>
-                toast("Login to the App", {
+                toast.success("Login to the App", {
                   description:
                     "Only VIT Students are allowed to access the app",
-                  // action: {
-                  //   label: "Undo",
-                  //   onClick: () => console.log("Undo"),
-                  // },
                 })
               }
             >

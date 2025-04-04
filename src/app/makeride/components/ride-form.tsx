@@ -34,6 +34,9 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { createRide } from "../../../../actions/create-ride";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const formSchema = z
   .object({
@@ -120,11 +123,28 @@ export function RideForm() {
     },
   });
 
-  // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
+  const router = useRouter();
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      const result = await createRide(values);
+
+      if (result?.success) {
+        toast.success("Ride Created Successfully", {
+          description:
+            "Your ride has been posted and is now visible to others.",
+        });
+
+        if (result.redirectTo) {
+          router.push(result.redirectTo);
+        }
+      }
+    } catch (err) {
+      toast.error("Error", {
+        description:
+          err instanceof Error ? err.message : "Failed to create ride",
+      });
+    }
   }
 
   const now = new Date();
