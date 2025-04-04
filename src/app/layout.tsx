@@ -7,6 +7,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import SimpleFooter from "@/components/simple-footer";
 import Navbar from "@/components/navbar";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,6 +49,7 @@ export default function RootLayout({
             <SimpleFooter />
           </ThemeProvider>
         </SessionProvider>
+        <Toaster />
       </body>
     </html>
   );

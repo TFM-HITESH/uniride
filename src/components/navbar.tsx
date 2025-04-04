@@ -10,7 +10,7 @@ type Props = {};
 
 export default function Navbar({}: Props) {
   return (
-    <div className="w-full flex flex-row py-3 px-5 border-b border-1 shadow-lg justify-between sticky top-0 backdrop-blur-lg z-50">
+    <div className="w-full flex flex-row py-3 px-5 border-b border-1 shadow-lg justify-between sticky top-0 backdrop-blur-xl z-50">
       <Link
         href="/"
         className="flex flex-row items-center justify-center gap-3"

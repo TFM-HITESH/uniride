@@ -125,7 +125,6 @@ export function RideForm() {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
     console.log(values);
-    console.log(values.ride_cost);
   }
 
   const now = new Date();
