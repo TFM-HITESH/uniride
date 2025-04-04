@@ -17,15 +17,15 @@ export default function SimpleFooter({}: Props) {
         </div>
         <div className="flex flex-col md:flex-row items-center gap-3 md:gap-8">
           <div className="flex flex-row text-sm opacity-75 gap-3">
-            <Link href="/" className="hover:underline">
+            <Link href="/legal/#terms" className="hover:underline">
               Terms
             </Link>
             <p className="block">•</p>
-            <Link href="/" className="hover:underline">
+            <Link href="/legal/#privacy" className="hover:underline">
               Privacy
             </Link>
             <p className="block">•</p>
-            <Link href="/" className="hover:underline">
+            <Link href="/legal/#support" className="hover:underline">
               Support
             </Link>
           </div>

@@ -12,7 +12,7 @@ export default function RotateText() {
 
     // Clean up interval on unmount
     return () => clearInterval(interval);
-  }, []);
+  }, [words.length]);
   return (
     <AnimatePresence mode="wait">
       <motion.h1

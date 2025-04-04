@@ -58,7 +58,7 @@ export default function Home() {
       </section>
       <section
         className="flex flex-col w-[100%] gap-8 items-center justify-center bg-sidebar-accent my-[4rem] py-[5rem]"
-        id="usps"
+        id="features"
       >
         <div className="w-[85%] flex flex-col items-center justify-center gap-8">
           <div className="pb-[2rem] text-5xl font-bold">
@@ -97,7 +97,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section className="w-[85%] flex flex-row my-[4rem]">
+      <section className="w-[85%] flex flex-row my-[4rem]" id="safety">
         <div className="w-1/2 p-4 gap-y-8 flex flex-col">
           <div className="text-5xl font-bold">Your Safety is our Priority</div>
           <div className="text-accent-foreground/90 font-medium text-wrap w-[90%]">
@@ -152,7 +152,7 @@ export default function Home() {
       </section>
       <section
         className="flex flex-col w-[100%] gap-8 items-center justify-center bg-sidebar-accent my-[4rem] py-[5rem]"
-        id="usps"
+        id="how_it_works"
       >
         <div className="w-[85%] flex flex-col items-center justify-center gap-8">
           <div className="pb-[2rem] text-5xl font-bold">How it Works</div>
@@ -200,7 +200,7 @@ export default function Home() {
       </section>
       <section
         className="flex flex-col w-[85%] gap-8 mb-[4rem] mt-[2rem]"
-        id="home"
+        id="testimonials"
       >
         <div className="w-full flex flex-col items-center justify-start">
           <div className="pb-[3rem] text-5xl font-bold">What Students Say</div>

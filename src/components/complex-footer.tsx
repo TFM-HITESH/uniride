@@ -1,14 +1,15 @@
+import { Link as ScrollLink } from "react-scroll";
 import Link from "next/link";
 import React from "react";
-import { FaTaxi } from "react-icons/fa";
+import { FaDev, FaGithub, FaTaxi } from "react-icons/fa";
 
 type Props = {};
 
 export default function ComplexFooter({}: Props) {
   return (
     <div className="w-full bg-foreground/90 text-background mt-[3rem] flex flex-row items-center justify-center">
-      <div className="w-[85%] gap-8 py-12 flex flex-row">
-        <div className="w-1/4 flex flex-col gap-4">
+      <div className="w-[85%] gap-8 py-12 flex flex-row justify-between">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-row items-center text-4xl gap-4 font-extrabold">
             <FaTaxi className="opacity-85" /> UniRide
           </div>
@@ -18,23 +19,48 @@ export default function ComplexFooter({}: Props) {
         </div>
         <div className="gap-2 flex flex-col">
           <div className="text-2xl font-semibold pb-2">Quick Links</div>
-          <Link href="#home" className="text-xl text-background/70 font-medium">
+          <ScrollLink
+            to="home"
+            smooth={true}
+            duration={500}
+            className="text-xl text-background/70 font-medium cursor-pointer "
+          >
             Home
-          </Link>
-          <Link href="#home" className="text-xl text-background/70 font-medium">
+          </ScrollLink>
+          <ScrollLink
+            to="features"
+            smooth={true}
+            duration={500}
+            className="text-xl text-background/70 font-medium cursor-pointer "
+          >
             Features
-          </Link>
-          <Link href="#home" className="text-xl text-background/70 font-medium">
+          </ScrollLink>
+          <ScrollLink
+            to="safety"
+            smooth={true}
+            duration={500}
+            className="text-xl text-background/70 font-medium cursor-pointer "
+          >
             Safety
-          </Link>
-          <Link href="#home" className="text-xl text-background/70 font-medium">
+          </ScrollLink>
+          <ScrollLink
+            to="how_it_works"
+            smooth={true}
+            duration={500}
+            className="text-xl text-background/70 font-medium cursor-pointer "
+          >
             How It Works
-          </Link>
-          <Link href="#home" className="text-xl text-background/70 font-medium">
+          </ScrollLink>
+          <ScrollLink
+            to="testimonials"
+            smooth={true}
+            duration={500}
+            className="text-xl text-background/70 font-medium cursor-pointer "
+          >
             Testimonials
-          </Link>
+          </ScrollLink>
         </div>
-        <div className="gap-2 flex flex-col">
+        <div className="  gap-2 flex flex-col">
           <div className="text-2xl font-semibold pb-2">Contact Us</div>
           <Link
             href="mailto:uniridevit@gmail.com"
@@ -42,20 +68,34 @@ export default function ComplexFooter({}: Props) {
           >
             uniridevit@gmail.com
           </Link>
-          <Link href="#home" className="text-xl text-background/70 font-medium">
-            Features
+          <div className="text-lg text-background/60 font-medium">
+            VIT University
+          </div>
+          <div className="text-md text-background/60 font-medium">
+            Vellore, Tamil Nadu
+          </div>
+        </div>
+        <div className="  gap-2 flex flex-col">
+          <div className="text-2xl font-semibold pb-2">Meet The Developers</div>
+          <Link
+            href="https://github.com/TFM-HITESH/uniride"
+            target="_blank"
+            className="text-xl text-background/70 font-medium flex flex-row items-center gap-2"
+          >
+            <FaGithub className="text-2xl" />
+            Github
           </Link>
-          <Link href="#home" className="text-xl text-background/70 font-medium">
-            Safety
-          </Link>
-          <Link href="#home" className="text-xl text-background/70 font-medium">
-            How It Works
-          </Link>
-          <Link href="#home" className="text-xl text-background/70 font-medium">
-            Testimonials
+          {/* <Link href="" className="text-xl text-background/70 font-medium">
+            LinkedIn
+          </Link> */}
+          <Link
+            href="/profile"
+            className="text-xl text-background/70 font-medium flex flex-row items-center gap-2"
+          >
+            <FaDev className="text-2xl" />
+            Profile
           </Link>
         </div>
-        <div></div>
       </div>
     </div>
   );
