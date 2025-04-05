@@ -59,6 +59,7 @@ export default function Page() {
           } else if ("error" in historyResult) {
             setError(historyResult.error || "Failed to fetch ride history");
           }
+          // eslint-disable-next-line
         } catch (err) {
           setError("Failed to fetch data");
         } finally {

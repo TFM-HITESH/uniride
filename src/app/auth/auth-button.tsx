@@ -13,7 +13,6 @@ import { FaGoogle } from "react-icons/fa";
 import { CgProfile } from "react-icons/cg";
 import { FiSettings } from "react-icons/fi"; // Admin icon
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 
 // Helper function to check if user is admin
 const isAdminUser = (email?: string | null) => {

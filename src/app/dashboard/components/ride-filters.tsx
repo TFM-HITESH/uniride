@@ -107,7 +107,7 @@ export function RideFilters({
           <TimePicker
             field={{
               value: filters.time,
-              onChange: (value: any) => handleInputChange("time", value),
+              onChange: (value: any) => handleInputChange("time", value), // eslint-disable-line
             }}
           />
         </div>
