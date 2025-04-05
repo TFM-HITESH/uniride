@@ -10,10 +10,10 @@ const rideFormSchema = z
     source: z.string().trim().min(2),
     destination: z.string().trim().min(2),
     date: z.coerce.date(),
-    time: z.string().min(1, "Time is required"),
+    time: z.string().min(1),
     car_class: z.string().trim().min(1),
     car_model: z.string().trim().min(2),
-    seats_left: z.number().min(1).max(20),
+    total_seats: z.number().min(2).max(20),
     ride_cost: z.number().min(1).max(4000),
     gender_pref: z.enum(["any", "male", "female"]),
     air_conditioning: z.enum(["ac", "nonac"]),
@@ -38,6 +38,7 @@ export async function createRide(formData: unknown) {
 
   const user = await db.user.findUnique({
     where: { email: session.user.email },
+    select: { id: true },
   });
 
   if (!user) {
@@ -47,45 +48,79 @@ export async function createRide(formData: unknown) {
   // Convert form data to proper types
   const processedData = {
     ...(formData as Record<string, unknown>),
-    seats_left: Number((formData as any).seats_left),
+    total_seats: Number((formData as any).total_seats),
     ride_cost: Number((formData as any).ride_cost),
     date: new Date((formData as any).date),
   };
 
   const result = rideFormSchema.safeParse(processedData);
   if (!result.success) {
-    console.error("Validation errors:", result.error.format());
+    const errors = result.error.flatten();
+    console.error("Validation errors:", errors);
     throw new Error(
-      `Validation failed: ${JSON.stringify(result.error.flatten().fieldErrors)}`
+      Object.entries(errors.fieldErrors)
+        .map(([field, messages]) => `${field}: ${messages?.join(", ")}`)
+        .join(" | ")
     );
   }
 
   const data = result.data;
 
   try {
-    await db.ride.create({
-      data: {
-        userId: user.id,
-        source: data.source,
-        destination: data.destination,
-        date: data.date,
-        time: data.time,
-        car_class: data.car_class,
-        car_model: data.car_model,
-        seats_left: data.seats_left,
-        ride_cost: data.ride_cost,
-        gender_pref: data.gender_pref,
-        air_conditioning: data.air_conditioning === "ac",
-        desc_text: data.desc_text,
-      },
+    await db.$transaction(async (prisma) => {
+      // Create the ride using the correct field name (creatorId)
+      const ride = await prisma.ride.create({
+        data: {
+          source: data.source,
+          destination: data.destination,
+          date: data.date,
+          time: data.time,
+          car_class: data.car_class,
+          car_model: data.car_model,
+          total_seats: data.total_seats,
+          seats_left: data.total_seats - 1, // Reserve seat for creator
+          ride_cost: data.ride_cost,
+          gender_pref: data.gender_pref,
+          air_conditioning: data.air_conditioning === "ac",
+          desc_text: data.desc_text,
+          status: "ONGOING",
+          creatorId: user.id, // Using the correct field name from your schema
+        },
+      });
+
+      // Create dedicated chatroom
+      const chatRoom = await prisma.chatRoom.create({
+        data: {
+          rideId: ride.id, // Directly using rideId as per your schema
+        },
+      });
+
+      // Add creator to chatroom through join table
+      await prisma.chatRoomUser.create({
+        data: {
+          userId: user.id,
+          chatRoomId: chatRoom.id,
+        },
+      });
+
+      // Add creator as passenger (without chatRoom reference since it's not in your Passenger model)
+      await prisma.passenger.create({
+        data: {
+          userId: user.id,
+          rideId: ride.id,
+        },
+      });
     });
 
     return {
       success: true,
-      redirectTo: "/dashboard",
+      redirect: "/messages", // Redirect to messages page
     };
   } catch (error) {
     console.error("Database error:", error);
-    throw new Error("Failed to create ride in database.");
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to create ride",
+    };
   }
 }

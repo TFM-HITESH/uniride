@@ -1,9 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+// schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,34 +9,149 @@ datasource db {
 }
 
 model User {
-  id       String  @id @default(uuid())
-  email    String  @unique
-  fullname String
-  regno    String
-  gender   String
-
-  // One-to-many relation with Ride
-  rides    Ride[]
+  id        String         @id @default(uuid())
+  email     String         @unique
+  fullname  String
+  regno     String
+  gender    String?
+  
+  // Created Rides (as organizer)
+  createdRides Ride[]      @relation("CreatedRides")
+  
+  // Joined Rides (as passenger)
+  joinedRides  Passenger[] 
+  
+  // Messages Sent
+  messages    Message[]    
+  
+  // Notifications Received
+  notifications Notification[]
+  
+  // Chatrooms accessible to user (explicit many-to-many)
+  chatRooms   ChatRoomUser[]
+  
+  // Indexes
+  @@index([email])
+  @@index([regno])
 }
 
 model Ride {
-  id               String   @id @default(uuid())
+  id               String     @id @default(uuid())
   source           String
   destination      String
   date             DateTime
   time             String
   car_class        String
   car_model        String
+  total_seats      Int
   seats_left       Int
   ride_cost        Int
   gender_pref      String
   air_conditioning Boolean
   desc_text        String
+  status           RideStatus @default(ONGOING)
+  
+  // Creator/Organizer
+  creatorId        String
+  creator          User       @relation("CreatedRides", fields: [creatorId], references: [id])
+  
+  // Participants
+  passengers      Passenger[]
+  
+  // Dedicated Chat Room (1:1)
+  chatRoom        ChatRoom?
+  
+  // Notifications
+  notifications   Notification[]
+  
+  // Timestamps
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  // Indexes
+  @@index([creatorId])
+  @@index([status])
+  @@index([date])
+  @@index([source, destination])
+}
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+model Passenger {
+  id        String    @id @default(uuid())
+  ride      Ride      @relation(fields: [rideId], references: [id])
+  rideId    String
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String
 
-  // Relation to User
-  userId           String
-  user             User     @relation(fields: [userId], references: [id])
+  // Prevents duplicate participation
+  @@unique([rideId, userId])
+  
+  // Indexes
+  @@index([rideId])
+  @@index([userId])
+}
+
+model ChatRoom {
+  id        String    @id @default(uuid())
+  ride      Ride      @relation(fields: [rideId], references: [id])
+  rideId    String    @unique
+  messages  Message[]
+  
+  // Participants with access (explicit many-to-many)
+  users     ChatRoomUser[]
+  
+  createdAt DateTime  @default(now())
+}
+
+// Explicit join table for User-ChatRoom many-to-many
+model ChatRoomUser {
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  chatRoom  ChatRoom @relation(fields: [chatRoomId], references: [id])
+  chatRoomId String
+  
+  @@id([userId, chatRoomId])
+  @@index([chatRoomId])
+}
+
+model Message {
+  id         String    @id @default(uuid())
+  content    String
+  chatRoom   ChatRoom  @relation(fields: [chatRoomId], references: [id])
+  chatRoomId String
+  author     User      @relation(fields: [authorId], references: [id])
+  authorId   String
+  createdAt  DateTime  @default(now())
+  
+  // Indexes
+  @@index([chatRoomId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  message   String
+  read      Boolean          @default(false)
+  ride      Ride?            @relation(fields: [rideId], references: [id])
+  rideId    String?
+  user      User             @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime         @default(now())
+  
+  // Indexes
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+}
+
+enum RideStatus {
+  ONGOING
+  COMPLETED
+}
+
+enum NotificationType {
+  JOINED_RIDE
+  LEFT_RIDE
+  NEW_MESSAGE
+  RIDE_REMINDER
 }

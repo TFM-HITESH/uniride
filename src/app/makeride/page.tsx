@@ -5,7 +5,7 @@ type Props = {};
 
 export default function page({}: Props) {
   return (
-    <div className="min-h-screen w-full flex justify-center items-center">
+    <div className="min-h-screen w-full flex justify-center items-center p-[3rem]">
       <RideForm />
     </div>
   );

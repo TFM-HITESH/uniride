@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -37,118 +36,100 @@ import { Textarea } from "@/components/ui/textarea";
 import { createRide } from "../../../../actions/create-ride";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 const formSchema = z
   .object({
-    source: z.string().trim().min(2, {
-      message: "Ride pickup address must be at least 2 characters.",
-    }),
-
-    destination: z.string().trim().min(2, {
-      message: "Ride destination address must be at least 2 characters.",
-    }),
-
+    source: z
+      .string()
+      .trim()
+      .min(2, { message: "Pickup must be at least 2 characters." }),
+    destination: z
+      .string()
+      .trim()
+      .min(2, { message: "Destination must be at least 2 characters." }),
     date: z
-      .date({
-        required_error: "A date of ride is required.",
-      })
+      .date({ required_error: "Date is required." })
       .refine((date) => date >= new Date(), {
-        message: "The ride date must be in the future.",
+        message: "Date must be in future.",
       }),
-
-    time: z.string({
-      message: "You must pick a time for the ride.",
-    }), // Keeping your original time validation
-
-    car_class: z
-      .string({
-        required_error: "You must pick a class of cars.",
-      })
-      .trim(),
-
+    time: z.string({ message: "Time is required." }),
+    car_class: z.string({ required_error: "Car class is required." }).trim(),
     car_model: z
       .string()
       .trim()
-      .min(2, { message: "Car model name must be at least 2 characters." }),
-
-    seats_left: z
+      .min(2, { message: "Model must be at least 2 characters." }),
+    total_seats: z
       .string()
-      .min(1, { message: "Seats left is required." })
-      .regex(/^\d+$/, { message: "Seats left must be a number." })
+      .min(1, { message: "Seats required." })
+      .regex(/^\d+$/, { message: "Must be number." })
       .transform(Number)
-      .refine((num) => num > 0 && num <= 20, {
-        message: "Total number of seats left must be between 1 and 20.",
+      .refine((num) => num > 1 && num <= 20, {
+        message: "Seats must be 2-20.",
       }),
-
     ride_cost: z
       .string()
-      .min(1, { message: "Ride cost is required." })
-      .regex(/^\d+$/, { message: "Ride cost must be a number." })
+      .min(1, { message: "Cost required." })
+      .regex(/^\d+$/, { message: "Must be number." })
       .transform(Number)
       .refine((num) => num > 0 && num <= 4000, {
-        message: "Total ride cost must be between ₹1 and ₹4000.",
+        message: "Cost must be ₹1-4000.",
       }),
-
     gender_pref: z.enum(["any", "male", "female"], {
-      required_error: "You must select a valid gender preference.",
+      required_error: "Gender preference required.",
     }),
-
     air_conditioning: z.enum(["ac", "nonac"], {
-      required_error: "You must select a valid AC option.",
+      required_error: "AC option required.",
     }),
-
     desc_text: z
       .string()
       .trim()
-      .min(10, { message: "Description must be at least 10 characters long." })
-      .max(100, { message: "Description must not exceed 100 characters." })
+      .min(10, { message: "Description too short." })
+      .max(100, { message: "Description too long." })
       .refine((text) => text.replace(/\s/g, "").length > 0, {
-        message: "Description cannot be only spaces.",
+        message: "Description required.",
       })
       .refine((text) => !/[<>{}]/.test(text), {
-        message: "Description contains invalid characters.",
+        message: "Invalid characters.",
       }),
   })
   .refine((data) => data.source !== data.destination, {
-    message: "Pickup and destination addresses must be different.",
-    path: ["destination"], // Error will show under 'destination'
+    message: "Locations must differ.",
+    path: ["destination"],
   });
 
 export function RideForm() {
-  // 1. Define your form.
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      source: "",
-    },
+    defaultValues: { source: "", car_class: "Sedan" },
   });
 
   const router = useRouter();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
     try {
       const result = await createRide(values);
-
-      if (result?.success) {
-        toast.success("Ride Created Successfully", {
-          description:
-            "Your ride has been posted and is now visible to others.",
-        });
-
-        if (result.redirectTo) {
-          router.push(result.redirectTo);
-        }
+      if (result?.success && result?.redirect) {
+        toast.success("Ride Created");
+        router.push(result.redirect);
+        router.refresh();
+        return;
       }
+      if (result?.error) throw new Error(result.error);
     } catch (err) {
       toast.error("Error", {
         description:
           err instanceof Error ? err.message : "Failed to create ride",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   const now = new Date();
-  now.setHours(0, 0, 0, 0); // Reset to start of the day
+  now.setHours(0, 0, 0, 0);
   now.setDate(now.getDate() - 1);
   const threeMonthsAhead = new Date();
   threeMonthsAhead.setMonth(now.getMonth() + 3);
@@ -157,11 +138,11 @@ export function RideForm() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-8 border rounded-xl w-[95%] p-8 md:w-[45%] my-10"
+        className="space-y-6 p-4 sm:p-8 w-[50%] mx-auto border rounded-lg shadow-sm"
       >
-        <p className="text-3xl font-semibold">Create a New Ride</p>
+        <p className="text-2xl sm:text-3xl font-semibold">Create a New Ride</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <FormField
             control={form.control}
             name="source"
@@ -169,11 +150,8 @@ export function RideForm() {
               <FormItem>
                 <FormLabel>From</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ride Source" {...field} />
+                  <Input placeholder="Pickup location" {...field} />
                 </FormControl>
-                <FormDescription>
-                  {/* This is your public display name. */}
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -185,11 +163,8 @@ export function RideForm() {
               <FormItem>
                 <FormLabel>To</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ride Destination" {...field} />
+                  <Input placeholder="Destination" {...field} />
                 </FormControl>
-                <FormDescription>
-                  {/* This is your public display name. */}
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -199,22 +174,18 @@ export function RideForm() {
             name="date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Ride Date</FormLabel>
+                <FormLabel>Date</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
-                        variant={"outline"}
+                        variant="outline"
                         className={cn(
-                          "pl-3 text-left font-normal",
+                          "text-left font-normal",
                           !field.value && "text-muted-foreground"
                         )}
                       >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
+                        {field.value ? format(field.value, "PPP") : "Pick date"}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
                     </FormControl>
@@ -231,7 +202,6 @@ export function RideForm() {
                     />
                   </PopoverContent>
                 </Popover>
-                <FormDescription></FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -241,7 +211,7 @@ export function RideForm() {
             name="time"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Ride Timings</FormLabel>
+                <FormLabel>Time</FormLabel>
                 <FormControl>
                   <TimePicker field={field} />
                 </FormControl>
@@ -249,20 +219,16 @@ export function RideForm() {
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="car_class"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Car Type</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select the type of car being booked" />
+                      <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -272,95 +238,95 @@ export function RideForm() {
                     <SelectItem value="Auto">Auto</SelectItem>
                   </SelectContent>
                 </Select>
-                <FormDescription></FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="car_model"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Car Model</FormLabel>
+                <FormLabel>Model</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Swift Dzire, WagonR etc. (Put NA if unknown)"
-                    {...field}
-                  />
+                  <Input placeholder="Car model" {...field} />
                 </FormControl>
-                <FormDescription></FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
-            name="seats_left"
+            name="total_seats"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Seats Available</FormLabel>
+                <FormLabel>Total Seats</FormLabel>
                 <FormControl>
-                  <Input placeholder="Seats Left" {...field} />
+                  <Input
+                    placeholder="Total seats"
+                    {...field}
+                    onChange={(e) =>
+                      /^\d*$/.test(e.target.value) &&
+                      field.onChange(e.target.value)
+                    }
+                  />
                 </FormControl>
-                <FormDescription></FormDescription>
+                <FormDescription>
+                  All passengers except driver (Creator + participants)
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="ride_cost"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Estimated Ride Cost (₹)</FormLabel>
+                <FormLabel>Cost (₹)</FormLabel>
                 <FormControl>
-                  <Input placeholder="Cost per person" {...field} />
+                  <Input
+                    placeholder="Cost per person"
+                    {...field}
+                    onChange={(e) =>
+                      /^\d*$/.test(e.target.value) &&
+                      field.onChange(e.target.value)
+                    }
+                  />
                 </FormControl>
-                <FormDescription></FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="gender_pref"
             render={({ field }) => (
               <FormItem className="space-y-3">
-                <FormLabel>Gender Preference</FormLabel>
+                <FormLabel>Gender</FormLabel>
                 <FormControl>
                   <RadioGroup
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex flex-row space-x-2 "
+                    value={field.value}
+                    className="flex flex-col sm:flex-row gap-2 sm:gap-4"
                   >
-                    <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormItem className="flex items-center space-x-2 space-y-0">
                       <FormControl>
                         <RadioGroupItem value="any" />
                       </FormControl>
-                      <FormLabel className="font-normal text-ls text-nowrap">
-                        Any
-                      </FormLabel>
+                      <FormLabel className="font-normal">Any</FormLabel>
                     </FormItem>
-                    <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormItem className="flex items-center space-x-2 space-y-0">
                       <FormControl>
                         <RadioGroupItem value="male" />
                       </FormControl>
-                      <FormLabel className="font-normal text-nowrap">
-                        Male Only
-                      </FormLabel>
+                      <FormLabel className="font-normal">Male</FormLabel>
                     </FormItem>
-                    <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormItem className="flex items-center space-x-2 space-y-0">
                       <FormControl>
                         <RadioGroupItem value="female" />
                       </FormControl>
-                      <FormLabel className="font-normal text-nowrap">
-                        Female Only
-                      </FormLabel>
+                      <FormLabel className="font-normal">Female</FormLabel>
                     </FormItem>
                   </RadioGroup>
                 </FormControl>
@@ -368,26 +334,25 @@ export function RideForm() {
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="air_conditioning"
             render={({ field }) => (
               <FormItem className="space-y-3">
-                <FormLabel>Air Conditioning Status</FormLabel>
+                <FormLabel>AC</FormLabel>
                 <FormControl>
                   <RadioGroup
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex flex-row space-x-2"
+                    value={field.value}
+                    className="flex flex-col sm:flex-row gap-2 sm:gap-4"
                   >
-                    <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormItem className="flex items-center space-x-2 space-y-0">
                       <FormControl>
                         <RadioGroupItem value="ac" />
                       </FormControl>
                       <FormLabel className="font-normal">AC</FormLabel>
                     </FormItem>
-                    <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormItem className="flex items-center space-x-2 space-y-0">
                       <FormControl>
                         <RadioGroupItem value="nonac" />
                       </FormControl>
@@ -400,25 +365,35 @@ export function RideForm() {
             )}
           />
         </div>
+
         <FormField
           control={form.control}
           name="desc_text"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Additional Details</FormLabel>
+              <FormLabel>Details</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Any other specific requirements or information"
-                  className="resize-none"
+                  placeholder="Additional information"
+                  className="resize-none min-h-[70px]"
                   {...field}
                 />
               </FormControl>
-              <FormDescription></FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <div className="flex items-center justify-center gap-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-background"></div>
+              Creating...
+            </div>
+          ) : (
+            "Create Ride"
+          )}
+        </Button>
       </form>
     </Form>
   );
