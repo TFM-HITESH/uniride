@@ -36,7 +36,7 @@ type RideData = {
   gender_pref: string;
 };
 
-const RIDES_PER_PAGE = 5; // Adjust this number as needed
+const RIDES_PER_PAGE = 3; // Adjust this number as needed
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
