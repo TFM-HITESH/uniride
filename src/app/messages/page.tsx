@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Crown } from "lucide-react";
 import {
   format,
-  formatDistanceToNow,
+  // formatDistanceToNow,
   isWithinInterval,
   subHours,
 } from "date-fns";
@@ -51,8 +51,10 @@ type RideDetails = {
 };
 
 export default function MessagesPage() {
+  // eslint-disable-next-line
   const [chats, setChats] = useState<any[]>([]);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  // eslint-disable-next-line
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -106,6 +108,29 @@ export default function MessagesPage() {
     loadMessages();
   }, [selectedChat]);
 
+  // Update last message in sidebar when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0 && selectedChat) {
+      const lastMessage = messages[messages.length - 1];
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === selectedChat
+            ? {
+                ...chat,
+                lastMessage: {
+                  content: lastMessage.content,
+                  createdAt: lastMessage.createdAt,
+                  author: {
+                    fullname: lastMessage.author.fullname,
+                  },
+                },
+              }
+            : chat
+        )
+      );
+    }
+  }, [messages, selectedChat]);
+
   // Fetch ride details when chat is selected
   useEffect(() => {
     if (!selectedChat) return;
@@ -156,6 +181,25 @@ export default function MessagesPage() {
     try {
       const sentMessage = await sendMessage(selectedChat, newMessage);
       setMessages([...messages, sentMessage]);
+
+      // Immediate UI update for sent message
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === selectedChat
+            ? {
+                ...chat,
+                lastMessage: {
+                  content: newMessage,
+                  createdAt: new Date(),
+                  author: {
+                    fullname: "You",
+                  },
+                },
+              }
+            : chat
+        )
+      );
+
       setNewMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
@@ -193,7 +237,7 @@ export default function MessagesPage() {
     return (
       <div className="flex h-[calc(100vh-64px)]">
         {/* Left sidebar skeleton */}
-        <div className="hidden md:block w-80 border-r">
+        <div className="hidden md:block w-[350px] border-r">
           <div className="p-4 border-b">
             <Skeleton className="h-6 w-32" />
           </div>
@@ -238,6 +282,11 @@ export default function MessagesPage() {
             <Skeleton className="h-8 w-3/4" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-1/2" />
+            <div className="space-y-2 pt-4">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-12 rounded-lg" />
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -246,8 +295,8 @@ export default function MessagesPage() {
 
   return (
     <div className="flex h-[calc(100vh-64px)]">
-      {/* Left Sidebar (Chat List) */}
-      <div className="hidden md:block w-[500px] border-r">
+      {/* Left Sidebar (Chat List) - Updated UI */}
+      <div className="hidden md:block w-[350px] border-r">
         <div className="p-4 border-b">
           <h2 className="text-xl font-semibold">Messages</h2>
         </div>
@@ -260,17 +309,16 @@ export default function MessagesPage() {
               }`}
               onClick={() => setSelectedChat(chat.id)}
             >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-medium">
-                    {chat.ride.source} to {chat.ride.destination}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {format(new Date(chat.ride.date), "MMM d, yyyy")} •{" "}
-                    {chat.ride.time}
-                  </p>
+              <div className="flex flex-col gap-1">
+                <h3 className="font-medium">
+                  {chat.ride.source} to {chat.ride.destination}
+                </h3>
+
+                <div className="text-sm text-muted-foreground">
+                  {format(new Date(chat.ride.date), "MMM d, yyyy")} •{" "}
+                  {chat.ride.time}
                   {chat.lastMessage && (
-                    <p className="text-sm mt-1 truncate">
+                    <p className="truncate mt-1">
                       <span className="font-medium">
                         {chat.lastMessage.author.fullname}:
                       </span>{" "}
@@ -278,17 +326,18 @@ export default function MessagesPage() {
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="p-2">
+
+                <div className="flex gap-2 mt-2">
+                  <Badge variant="outline" className="px-2 py-0.5 text-xs">
                     {chat.ride.seatsLeft} seat
                     {chat.ride.seatsLeft !== 1 ? "s" : ""}
                   </Badge>
                   {chat.ride.status === "ONGOING" ? (
-                    <Badge className="bg-green-600 text-white text-xs">
+                    <Badge className="bg-green-600 text-white text-xs px-2 py-0.5">
                       Ongoing
                     </Badge>
                   ) : (
-                    <Badge className="bg-gray-600 text-white text-xs">
+                    <Badge className="bg-gray-600 text-white text-xs px-2 py-0.5">
                       Completed
                     </Badge>
                   )}
@@ -329,27 +378,27 @@ export default function MessagesPage() {
                     );
                   }}
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-medium">
-                        {chat.ride.source} to {chat.ride.destination}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(chat.ride.date), "MMM d")} •{" "}
-                        {chat.ride.time}
-                      </p>
+                  <div className="flex flex-col gap-1">
+                    <h3 className="font-medium">
+                      {chat.ride.source} to {chat.ride.destination}
+                    </h3>
+
+                    <div className="text-sm text-muted-foreground">
+                      {format(new Date(chat.ride.date), "MMM d")} •{" "}
+                      {chat.ride.time}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="p-2">
+
+                    <div className="flex gap-2 mt-2">
+                      <Badge variant="outline" className="px-2 py-0.5 text-xs">
                         {chat.ride.seatsLeft} seat
                         {chat.ride.seatsLeft !== 1 ? "s" : ""}
                       </Badge>
                       {chat.ride.status === "ONGOING" ? (
-                        <Badge className="bg-green-600 text-white text-xs">
+                        <Badge className="bg-green-600 text-white text-xs px-2 py-0.5">
                           Ongoing
                         </Badge>
                       ) : (
-                        <Badge className="bg-gray-600 text-white text-xs">
+                        <Badge className="bg-gray-600 text-white text-xs px-2 py-0.5">
                           Completed
                         </Badge>
                       )}
@@ -540,7 +589,7 @@ export default function MessagesPage() {
 
       {/* Right Sidebar (Ride Details) */}
       {selectedChat && (
-        <div className="hidden lg:block w-80 border-l">
+        <div className="hidden lg:block w-[350px] border-l">
           <ScrollArea className="h-full">
             <div className="p-4 space-y-4">
               {isRideDetailsLoading ? (
