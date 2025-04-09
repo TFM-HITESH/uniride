@@ -70,70 +70,66 @@ export async function getUserChats(): Promise<Chat[]> {
   }
 
   try {
-    console.log("Fetching chats for user:", session.user.email);
-
-    // 1. First get the user ID from email
+    // 1. Get the user ID from email
     const user = await db.user.findUnique({
       where: { email: session.user.email },
       select: { id: true },
     });
 
     if (!user) {
-      console.error("User not found for email:", session.user.email);
       throw new Error("User not found in database");
     }
 
-    console.log("Found user ID:", user.id);
-
-    // 2. Fetch chat rooms for this user
-    const chatRooms = await db.chatRoomUser.findMany({
-      where: { userId: user.id },
+    // 2. Fetch all chat rooms where user is either:
+    // - Owner (ride creator) OR
+    // - Passenger (via ChatRoomUser)
+    const chatRooms = await db.chatRoom.findMany({
+      where: {
+        OR: [
+          // User is in the ChatRoomUser table
+          { users: { some: { userId: user.id } } },
+          // OR user is the ride creator
+          { ride: { creatorId: user.id } },
+        ],
+      },
       include: {
-        chatRoom: {
+        ride: {
+          select: {
+            id: true,
+            source: true,
+            destination: true,
+            date: true,
+            time: true,
+            seats_left: true,
+            status: true,
+          },
+        },
+        messages: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
           include: {
-            ride: {
+            author: {
               select: {
-                id: true,
-                source: true,
-                destination: true,
-                date: true,
-                time: true,
-                seats_left: true,
-                status: true,
-              },
-            },
-            messages: {
-              orderBy: { createdAt: "desc" },
-              take: 1,
-              include: {
-                author: {
-                  select: {
-                    fullname: true,
-                  },
-                },
+                fullname: true,
               },
             },
           },
         },
       },
       orderBy: {
-        chatRoom: {
-          messages: {
-            _count: "desc",
-          },
+        messages: {
+          _count: "desc",
         },
       },
     });
 
-    console.log(`Found ${chatRooms.length} chat rooms`);
-
     // 3. Transform the data
-    const result = chatRooms.map((chatRoomUser) => {
-      const ride = chatRoomUser.chatRoom.ride;
-      const lastMessage = chatRoomUser.chatRoom.messages[0];
+    const result = chatRooms.map((chatRoom) => {
+      const ride = chatRoom.ride;
+      const lastMessage = chatRoom.messages[0];
 
       return {
-        id: chatRoomUser.chatRoom.id,
+        id: chatRoom.id,
         ride: {
           id: ride.id,
           source: ride.source,
@@ -152,18 +148,13 @@ export async function getUserChats(): Promise<Chat[]> {
               },
             }
           : undefined,
-        unreadCount: 0,
+        unreadCount: 0, // You might want to implement actual unread count logic
       };
     });
 
-    console.log("Successfully processed chat rooms");
     return result;
   } catch (error) {
-    console.error("Detailed error in getUserChats:", {
-      error,
-      message: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+    console.error("Error in getUserChats:", error);
     throw new Error("Failed to fetch chats. Please try again.");
   }
 }
@@ -358,11 +349,7 @@ export async function getRideDetails(rideId: string): Promise<RideDetails> {
               },
             },
           },
-          where: {
-            NOT: {
-              userId: user.id, // Exclude creator from passengers list
-            },
-          },
+          // REMOVED the where clause that was excluding current user
         },
       },
     });
@@ -371,6 +358,7 @@ export async function getRideDetails(rideId: string): Promise<RideDetails> {
       throw new Error("Ride not found");
     }
 
+    // Check if user is creator OR passenger
     const isPassenger = ride.passengers.some((p) => p.user.id === user.id);
     if (ride.creatorId !== user.id && !isPassenger) {
       throw new Error("You don't have access to this ride");
@@ -384,12 +372,14 @@ export async function getRideDetails(rideId: string): Promise<RideDetails> {
         email: ride.creator.email,
         isOwner: true,
       },
-      ...ride.passengers.map((p) => ({
-        id: p.user.id,
-        fullname: p.user.fullname,
-        email: p.user.email,
-        isOwner: false,
-      })),
+      ...ride.passengers
+        .filter((p) => p.user.id !== ride.creatorId) // Exclude owner from passengers list
+        .map((p) => ({
+          id: p.user.id,
+          fullname: p.user.fullname,
+          email: p.user.email,
+          isOwner: false,
+        })),
     ];
 
     return {

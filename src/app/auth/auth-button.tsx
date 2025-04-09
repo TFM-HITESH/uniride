@@ -28,7 +28,7 @@ export default function AuthButton() {
   return session ? (
     <Popover>
       <PopoverTrigger>
-        <ColourAvatar name={session?.user?.name ?? "Guest"} />
+        <ColourAvatar name={processName(session?.user?.name ?? "Guest")} />
       </PopoverTrigger>
       <PopoverContent className="mr-[1rem] mt-[0.25rem]">
         <div className="w-full flex h-full justify-end flex-col items-center">

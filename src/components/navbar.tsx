@@ -34,7 +34,7 @@ export default function Navbar({}: Props) {
           <span className="absolute left-0 bottom-0 h-[2px] w-0 bg-primary transition-all duration-200 group-hover:w-full"></span>
         </Link>
         <Link
-          href="/dashboard"
+          href="/myrides"
           className="text-md font-medium transition-colors hover:text-primary relative group"
         >
           My Rides

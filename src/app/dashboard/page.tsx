@@ -285,6 +285,7 @@ export default function DashboardPage() {
               {paginatedRides.map((ride) => (
                 <RideCard
                   key={ride.id}
+                  id={ride.id}
                   fullname={ride.fullname}
                   email={ride.email}
                   ride_cost={ride.ride_cost}

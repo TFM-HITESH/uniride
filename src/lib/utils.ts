@@ -6,5 +6,5 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function processName(fullName: string): string {
-  return fullName.replace(/\s\d{2}[A-Z]{3}\d{4}$/, "");
+  return fullName?.replace(/\s\d{2}[A-Z]{3}\d{4}$/, "");
 }

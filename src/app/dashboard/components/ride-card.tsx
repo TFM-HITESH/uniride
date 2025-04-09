@@ -1,14 +1,19 @@
+"use client";
+
 import ColourAvatar from "@/components/colour-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import React from "react";
 import { FaCarSide } from "react-icons/fa";
 import { FaLocationDot } from "react-icons/fa6";
 import { MdDateRange } from "react-icons/md";
 import { PiSeatFill } from "react-icons/pi";
-// import { FaTaxi } from "react-icons/fa";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import { handleJoinRide } from "@/../actions/client-join-ride";
 
 type Props = {
+  id: string;
   fullname: string;
   email: string;
   ride_cost: number;
@@ -22,9 +27,11 @@ type Props = {
   car_model: string;
   air_conditioning: boolean;
   gender_pref: string;
+  isParticipant?: boolean; // Add this prop to check if user already joined
 };
 
 export default function RideCard({
+  id,
   fullname,
   email,
   ride_cost,
@@ -38,7 +45,44 @@ export default function RideCard({
   car_model,
   air_conditioning,
   gender_pref,
+  isParticipant = false, // Default to false
 }: Props) {
+  const router = useRouter();
+  const [isJoining, setIsJoining] = useState(false);
+
+  const handleJoin = async () => {
+    if (isParticipant) {
+      toast.info("You've already joined this ride");
+      return;
+    }
+
+    if (seats_left <= 0) {
+      toast.error("This ride is already full");
+      return;
+    }
+
+    setIsJoining(true);
+    try {
+      const result = await handleJoinRide(id);
+      if (result.success) {
+        toast.success("Successfully joined the ride! Redirecting...");
+        // Redirect after a short delay for better UX
+        setTimeout(() => router.push("/myrides"), 1000);
+      } else {
+        if (result.message?.includes("already joined")) {
+          toast.info("You've already joined this ride");
+        } else {
+          toast.error(result.message || "Failed to join ride");
+        }
+      }
+      // eslint-disable-next-line
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
   return (
     <div className="w-full flex flex-row p-4 md:p-6 rounded-2xl bg-card border">
       <div className="w-[80%] flex flex-col">
@@ -87,7 +131,6 @@ export default function RideCard({
           {desc_text}
         </div>
         <div className="flex flex-col md:flex-row md:items-center gap-2 mt-4 md:mt-2 w-full justify-start">
-          {/* <FaTaxi className="text-sm opacity-65" /> */}
           <FaCarSide className="text-md opacity-65" />
           <div className="text-sm flex md:flex-row flex-col gap-1 md:gap-2 opacity-65 font-semibold w-[65%] md:w-[30%]">
             <div className="flex flex-row gap-1 md:gap-2 w-full">
@@ -113,18 +156,24 @@ export default function RideCard({
               {gender_pref === "any" && (
                 <Badge className="text-nowrap">Any Gender</Badge>
               )}
-              {/* {female_only && (
-                <Badge className="text-nowrap">Female Only</Badge>
-              )}
-              {male_only && <Badge className="text-nowrap">Male Only</Badge>} */}
             </div>
           </div>
         </div>
       </div>
       <div className="w-[20%] flex flex-col items-end justify-between">
-        <div className=" text-xl md:text-2xl font-bold">₹{ride_cost}/seat</div>
-        <Button className="text-wrap md:text-nowrap py-8 text-md md:py-3 md:px-4 ">
-          Request to Join
+        <div className="text-xl md:text-2xl font-bold">₹{ride_cost}/seat</div>
+        <Button
+          onClick={handleJoin}
+          disabled={isJoining || seats_left <= 0 || isParticipant}
+          className="text-wrap md:text-nowrap py-8 text-md md:py-3 md:px-4"
+        >
+          {isParticipant
+            ? "Already Joined"
+            : isJoining
+            ? "Joining..."
+            : seats_left > 0
+            ? "Request to Join"
+            : "Full"}
         </Button>
       </div>
     </div>
