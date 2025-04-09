@@ -48,11 +48,16 @@ const formSchema = z
       .string()
       .trim()
       .min(2, { message: "Destination must be at least 2 characters." }),
-    date: z
-      .date({ required_error: "Date is required." })
-      .refine((date) => date >= new Date(), {
-        message: "Date must be in future.",
-      }),
+    date: z.date({ required_error: "Date is required." }).refine(
+      (date) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return date >= today;
+      },
+      {
+        message: "Date must be today or in future.",
+      }
+    ),
     time: z.string({ message: "Time is required." }),
     car_class: z.string({ required_error: "Car class is required." }).trim(),
     car_model: z
@@ -102,7 +107,15 @@ export function RideForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { source: "", car_class: "Sedan" },
+    defaultValues: {
+      source: "",
+      destination: "",
+      car_class: "Sedan",
+      // total_seats: "4",
+      // ride_cost: "100",
+      gender_pref: "any",
+      air_conditioning: "ac",
+    },
   });
 
   const router = useRouter();
@@ -110,35 +123,63 @@ export function RideForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      const result = await createRide(values);
-      if (result?.success && result?.redirect) {
-        toast.success("Ride Created");
-        router.push(result.redirect);
-        router.refresh();
-        return;
+      // Parse the time from "HH:mm AM/PM" format
+      const [timeStr, period] = values.time.split(" ");
+      // eslint-disable-next-line
+      let [hours, minutes] = timeStr.split(":").map(Number);
+      // Convert 12-hour to 24-hour format
+      if (period === "PM" && hours !== 12) {
+        hours += 12;
+      } else if (period === "AM" && hours === 12) {
+        hours = 0;
       }
-      if (result?.error) throw new Error(result.error);
-    } catch (err) {
-      toast.error("Error", {
-        description:
-          err instanceof Error ? err.message : "Failed to create ride",
+
+      // Create the combined date object
+      const rideDate = new Date(values.date);
+      rideDate.setHours(hours, minutes, 0, 0);
+
+      // Debug logs
+      console.log("Form values:", values);
+      console.log("Parsed hours:", hours, "minutes:", minutes);
+      console.log("Combined date:", rideDate);
+      console.log("Local string:", rideDate.toLocaleString());
+      console.log("ISO string:", rideDate.toISOString());
+
+      const result = await createRide({
+        ...values,
+        date: rideDate,
       });
+
+      if (result?.success) {
+        toast.success("Ride created successfully!");
+        router.push("/messages");
+        router.refresh();
+      } else if (result?.error) {
+        throw new Error(result.error);
+      }
+    } catch (err) {
+      toast.error("Failed to create ride", {
+        description:
+          err instanceof Error ? err.message : "An unknown error occurred",
+      });
+      console.error("Error details:", err);
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  now.setDate(now.getDate() - 1);
-  const threeMonthsAhead = new Date();
-  threeMonthsAhead.setMonth(now.getMonth() + 3);
+  // Calendar constraints
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const threeMonthsLater = new Date();
+  threeMonthsLater.setMonth(today.getMonth() + 3);
 
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6 p-4 sm:p-8 w-[50%] mx-auto border rounded-lg shadow-sm"
+        className="space-y-6 p-4 sm:p-8 w-full md:w-[50%] mx-auto border rounded-lg shadow-sm"
       >
         <p className="text-2xl sm:text-3xl font-semibold">Create a New Ride</p>
 
@@ -196,7 +237,7 @@ export function RideForm() {
                       selected={field.value}
                       onSelect={field.onChange}
                       disabled={(date) =>
-                        date <= now || date >= threeMonthsAhead
+                        date < today || date > threeMonthsLater
                       }
                       initialFocus
                     />
@@ -209,15 +250,23 @@ export function RideForm() {
           <FormField
             control={form.control}
             name="time"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Time</FormLabel>
-                <FormControl>
-                  <TimePicker field={field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const selectedDate = form.getValues("date");
+              const isToday =
+                selectedDate &&
+                format(selectedDate, "yyyy-MM-dd") ===
+                  format(new Date(), "yyyy-MM-dd");
+
+              return (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Time (IST)</FormLabel>
+                  <FormControl>
+                    <TimePicker field={field} isToday={isToday} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
           <FormField
             control={form.control}
@@ -265,14 +314,15 @@ export function RideForm() {
                   <Input
                     placeholder="Total seats"
                     {...field}
-                    onChange={(e) =>
-                      /^\d*$/.test(e.target.value) &&
-                      field.onChange(e.target.value)
-                    }
+                    onChange={(e) => {
+                      if (/^\d*$/.test(e.target.value)) {
+                        field.onChange(e.target.value);
+                      }
+                    }}
                   />
                 </FormControl>
                 <FormDescription>
-                  All passengers except driver (Creator + participants)
+                  Including yourself (Driver + passengers)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -288,10 +338,11 @@ export function RideForm() {
                   <Input
                     placeholder="Cost per person"
                     {...field}
-                    onChange={(e) =>
-                      /^\d*$/.test(e.target.value) &&
-                      field.onChange(e.target.value)
-                    }
+                    onChange={(e) => {
+                      if (/^\d*$/.test(e.target.value)) {
+                        field.onChange(e.target.value);
+                      }
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -303,7 +354,7 @@ export function RideForm() {
             name="gender_pref"
             render={({ field }) => (
               <FormItem className="space-y-3">
-                <FormLabel>Gender</FormLabel>
+                <FormLabel>Gender Preference</FormLabel>
                 <FormControl>
                   <RadioGroup
                     onValueChange={field.onChange}
@@ -320,13 +371,13 @@ export function RideForm() {
                       <FormControl>
                         <RadioGroupItem value="male" />
                       </FormControl>
-                      <FormLabel className="font-normal">Male</FormLabel>
+                      <FormLabel className="font-normal">Male Only</FormLabel>
                     </FormItem>
                     <FormItem className="flex items-center space-x-2 space-y-0">
                       <FormControl>
                         <RadioGroupItem value="female" />
                       </FormControl>
-                      <FormLabel className="font-normal">Female</FormLabel>
+                      <FormLabel className="font-normal">Female Only</FormLabel>
                     </FormItem>
                   </RadioGroup>
                 </FormControl>
@@ -339,7 +390,7 @@ export function RideForm() {
             name="air_conditioning"
             render={({ field }) => (
               <FormItem className="space-y-3">
-                <FormLabel>AC</FormLabel>
+                <FormLabel>AC Preference</FormLabel>
                 <FormControl>
                   <RadioGroup
                     onValueChange={field.onChange}
@@ -371,11 +422,11 @@ export function RideForm() {
           name="desc_text"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Details</FormLabel>
+              <FormLabel>Additional Details</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Additional information"
-                  className="resize-none min-h-[70px]"
+                  placeholder="Share any important details about your ride..."
+                  className="resize-none min-h-[100px]"
                   {...field}
                 />
               </FormControl>
@@ -388,7 +439,7 @@ export function RideForm() {
           {isSubmitting ? (
             <div className="flex items-center justify-center gap-2">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-background"></div>
-              Creating...
+              Creating Ride...
             </div>
           ) : (
             "Create Ride"

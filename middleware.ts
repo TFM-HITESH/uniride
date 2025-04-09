@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
   const token = await getToken({ req });
-  const protectedRoutes = ["/dashboard", "/admin", "/user"];
+  const protectedRoutes = ["/dashboard", "/admin", "/user", "/messages"];
 
   if (protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route))) {
     if (!token || !token.email?.endsWith("@vitstudent.ac.in")) {
@@ -17,5 +17,5 @@ export async function middleware(req: NextRequest) {
 
 // Apply middleware to protected routes
 export const config = {
-  matcher: ["/dashboard/:path*", "/user/:path*"],
+  matcher: ["/dashboard/:path*", "/user/:path*", "/messages/:path*"],
 };

@@ -21,3 +21,4 @@ export async function GET() {
 
 // TESTING
 // curl http://localhost:3000/api/cron
+// https://cron-job.org/en/

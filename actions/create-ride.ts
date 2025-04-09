@@ -45,57 +45,80 @@ export async function createRide(formData: unknown) {
     throw new Error("User not found.");
   }
 
-  // Convert form data to proper types
-  const processedData = {
-    ...(formData as Record<string, unknown>),
-    total_seats: Number((formData as any).total_seats),
-    ride_cost: Number((formData as any).ride_cost),
-    date: new Date((formData as any).date),
-  };
-
-  const result = rideFormSchema.safeParse(processedData);
-  if (!result.success) {
-    const errors = result.error.flatten();
-    console.error("Validation errors:", errors);
-    throw new Error(
-      Object.entries(errors.fieldErrors)
-        .map(([field, messages]) => `${field}: ${messages?.join(", ")}`)
-        .join(" | ")
-    );
-  }
-
-  const data = result.data;
-
   try {
+    // Parse the form data
+    const rawData = formData as Record<string, unknown>;
+
+    // Debug log the incoming data
+    console.log("Raw form data received:", JSON.stringify(rawData, null, 2));
+
+    // The date should already be a proper Date object from the form
+    const rideDateTime = rawData.date as Date;
+
+    // Validate it's a proper date
+    if (!(rideDateTime instanceof Date) || isNaN(rideDateTime.getTime())) {
+      throw new Error("Invalid date received from form");
+    }
+
+    // Debug log the date details
+    console.log("Received date:", rideDateTime);
+    console.log("Local date string:", rideDateTime.toLocaleString());
+    console.log("ISO string:", rideDateTime.toISOString());
+
+    // Prepare data for validation
+    const processedData = {
+      ...rawData,
+      total_seats: Number(rawData.total_seats),
+      ride_cost: Number(rawData.ride_cost),
+      date: rideDateTime, // Use the Date object directly
+      time: rawData.time as string, // Keep original time string
+    };
+
+    const result = rideFormSchema.safeParse(processedData);
+    if (!result.success) {
+      const errors = result.error.flatten();
+      console.error("Validation errors:", errors);
+      throw new Error(
+        Object.entries(errors.fieldErrors)
+          .map(([field, messages]) => `${field}: ${messages?.join(", ")}`)
+          .join(" | ")
+      );
+    }
+
+    const data = result.data;
+
     await db.$transaction(async (prisma) => {
-      // Create the ride using the correct field name (creatorId)
+      // Create the ride with the date as received (should be in correct timezone)
       const ride = await prisma.ride.create({
         data: {
           source: data.source,
           destination: data.destination,
-          date: data.date,
+          date: data.date, // Prisma will handle timezone conversion
           time: data.time,
           car_class: data.car_class,
           car_model: data.car_model,
           total_seats: data.total_seats,
-          seats_left: data.total_seats - 1, // Reserve seat for creator
+          seats_left: data.total_seats - 1,
           ride_cost: data.ride_cost,
           gender_pref: data.gender_pref,
           air_conditioning: data.air_conditioning === "ac",
           desc_text: data.desc_text,
           status: "ONGOING",
-          creatorId: user.id, // Using the correct field name from your schema
+          creatorId: user.id,
         },
       });
+
+      // Debug log the created ride
+      console.log("Created ride with date:", ride.date);
 
       // Create dedicated chatroom
       const chatRoom = await prisma.chatRoom.create({
         data: {
-          rideId: ride.id, // Directly using rideId as per your schema
+          rideId: ride.id,
         },
       });
 
-      // Add creator to chatroom through join table
+      // Add creator to chatroom
       await prisma.chatRoomUser.create({
         data: {
           userId: user.id,
@@ -103,7 +126,7 @@ export async function createRide(formData: unknown) {
         },
       });
 
-      // Add creator as passenger (without chatRoom reference since it's not in your Passenger model)
+      // Add creator as passenger
       await prisma.passenger.create({
         data: {
           userId: user.id,
@@ -114,10 +137,10 @@ export async function createRide(formData: unknown) {
 
     return {
       success: true,
-      redirect: "/messages", // Redirect to messages page
+      redirect: "/messages",
     };
   } catch (error) {
-    console.error("Database error:", error);
+    console.error("Error in createRide:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to create ride",

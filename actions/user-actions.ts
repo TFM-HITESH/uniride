@@ -57,14 +57,48 @@ export async function getUserRideHistory(email: string) {
       orderBy: { date: "desc" },
     });
 
-    return rides.map((ride) => ({
-      id: ride.id,
-      source: ride.source,
-      destination: ride.destination,
-      date: new Date(ride.date).toLocaleDateString("en-GB"), // dd/mm/yyyy format
-      status: ride.status === "ONGOING" ? "Ongoing" : "Completed",
-      passenger_count: (ride.total_seats - ride.seats_left).toString(), // Show actual passengers
-    }));
+    return rides.map((ride) => {
+      const dateObj = new Date(ride.date);
+
+      // Convert to IST
+      const istDate = new Date(
+        dateObj.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+      );
+
+      // Format date as "6th May, 2025"
+      const day = istDate.getDate();
+      const month = istDate.toLocaleString("en-US", { month: "long" });
+      const year = istDate.getFullYear();
+
+      const daySuffix =
+        day === 1 || day === 21 || day === 31
+          ? "st"
+          : day === 2 || day === 22
+          ? "nd"
+          : day === 3 || day === 23
+          ? "rd"
+          : "th";
+
+      const formattedDate = `${day}${daySuffix} ${month}, ${year}`;
+
+      // Format time as "12:30 AM"
+      const formattedTime = istDate
+        .toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        })
+        .toUpperCase();
+
+      return {
+        id: ride.id,
+        source: ride.source,
+        destination: ride.destination,
+        date: `${formattedDate} • ${formattedTime}`, // Final output
+        status: ride.status === "ONGOING" ? "Ongoing" : "Completed",
+        passenger_count: (ride.total_seats - ride.seats_left).toString(),
+      };
+    });
   } catch (error) {
     console.error("Error fetching ride history:", error);
     return { error: "Failed to fetch ride history" };
