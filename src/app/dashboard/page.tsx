@@ -253,7 +253,7 @@ export default function DashboardPage() {
 
   return (
     <div className="w-full flex justify-center items-start min-h-screen">
-      <div className="flex flex-col gap-6 my-10 w-[90%] md:w-[45%]">
+      <div className="flex flex-col gap-6 my-10 w-[90%] md:w-[50%]">
         {/* Header */}
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Find a Ride</h1>
