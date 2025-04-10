@@ -147,7 +147,7 @@ const RideDetailsSidebar = memo(
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Cost</span>
                       <span className="font-medium">
-                        ${rideDetails.rideCost}
+                        ₹{rideDetails.rideCost}
                       </span>
                     </div>
                     <div className="flex justify-between">
