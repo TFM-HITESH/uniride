@@ -78,7 +78,7 @@ export default function ComplexFooter({}: Props) {
         <div className="  gap-2 flex flex-col">
           <div className="text-2xl font-semibold pb-2">Meet The Developers</div>
           <Link
-            href="https://github.com/TFM-HITESH/uniride"
+            href="/"
             target="_blank"
             className="text-xl text-background/70 font-medium flex flex-row items-center gap-2"
           >

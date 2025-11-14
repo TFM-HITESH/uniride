@@ -30,7 +30,7 @@ export default function SimpleFooter({}: Props) {
             </Link>
           </div>
           <div className="flex flex-row gap-3 text-2xl">
-            <Link href="https://github.com/TFM-HITESH/uniride" target="_blank">
+            <Link href="/" target="_blank">
               <FaGithub />
             </Link>
             <Link href="/">
