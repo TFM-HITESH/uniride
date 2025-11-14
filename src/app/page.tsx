@@ -202,19 +202,19 @@ export default function Home() {
           <div className="pb-[3rem] text-5xl font-bold">What Students Say</div>
           <div className="w-full grid grid-cols-3  gap-12 items-center justify-center">
             <FeedbackCard
-              name="Hitesh Shivkumar"
+              name="Lorem Ipsum"
               branch="Computer Science"
               year="2025"
               comment="UniRide made my airport trips so much easier and more affordable. Love the economic nature of this app!"
             />
             <FeedbackCard
-              name="Harshvardan Vatsa"
+              name="John Doe"
               branch="Computer Science"
               year="2025"
               comment="No more Whatsapp Group chaos. This platform is exactly what we needed!"
             />
             <FeedbackCard
-              name="Shreya Gupta"
+              name="Jane Doe"
               branch="Computer Science"
               year="2025"
               comment="The gender preference filter makes me feel much safer when sharing rides."
